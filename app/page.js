@@ -1,28 +1,27 @@
 'use client'
-
-import { Box, Button, Stack, TextField } from '@mui/material'
-import { useState, useEffect } from 'react'
-import { useRef } from 'react'
-
+import * as THREE from './three.js-master/build/three.module.js'
+import { Box, Stack, TextField, Button } from '@mui/material'
+import { useEffect, useRef, useState } from 'react'
+import { GLTFLoader } from './three.js-master/examples/jsm/loaders/GLTFLoader.js'
+import { OrbitControls } from './three.js-master/examples/jsm/controls/OrbitControls.js'
 
 export default function Home() {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      content: "Hi! I'm the Headstarter support assistant. How can I help you today?",
+      content: "Hi! Want ideas for coffee recipes or cute cafe suggestions? Ask away :)",
     },
   ])
   const [message, setMessage] = useState('')
 
   const sendMessage = async () => {
-    setMessage('')  // Clear the input field
+    setMessage('')
     setMessages((messages) => [
       ...messages,
-      { role: 'user', content: message },  // Add the user's message to the chat
-      { role: 'assistant', content: '' },  // Add a placeholder for the assistant's response
+      { role: 'user', content: message },
+      { role: 'assistant', content: '' },
     ])
-  
-    // Send the message to the server
+
     const response = fetch('/api/chat', {
       method: 'POST',
       headers: {
@@ -30,25 +29,24 @@ export default function Home() {
       },
       body: JSON.stringify([...messages, { role: 'user', content: message }]),
     }).then(async (res) => {
-      const reader = res.body.getReader()  // Get a reader to read the response body
-      const decoder = new TextDecoder()  // Create a decoder to decode the response text
-  
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+
       let result = ''
-      // Function to process the text from the response
       return reader.read().then(function processText({ done, value }) {
         if (done) {
           return result
         }
-        const text = decoder.decode(value || new Uint8Array(), { stream: true })  // Decode the text
+        const text = decoder.decode(value || new Uint8Array(), { stream: true })
         setMessages((messages) => {
-          let lastMessage = messages[messages.length - 1]  // Get the last message (assistant's placeholder)
-          let otherMessages = messages.slice(0, messages.length - 1)  // Get all other messages
+          let lastMessage = messages[messages.length - 1]
+          let otherMessages = messages.slice(0, messages.length - 1)
           return [
             ...otherMessages,
-            { ...lastMessage, content: lastMessage.content + text },  // Append the decoded text to the assistant's message
+            { ...lastMessage, content: lastMessage.content + text },
           ]
         })
-        return reader.read().then(processText)  // Continue reading the next chunk of the response
+        return reader.read().then(processText)
       })
     })
   }
@@ -56,149 +54,179 @@ export default function Home() {
   const messagesEndRef = useRef(null)
 
   const scrollToBottom = () => {
-  messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-}
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
 
-useEffect(() => {
-  scrollToBottom()
-}, [messages])
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages])
+
+  const canvasRef = useRef(null)
+
+  useEffect(() => {
+    if (!canvasRef.current) return
+
+    const scene = new THREE.Scene()
+    scene.background = new THREE.Color('#f7c6e7')
+
+    const loader = new GLTFLoader()
+    loader.load(
+      '/cloud_tea.glb',
+      function (glb) {
+        const model = glb.scene
+        model.scale.set(8, 8, 8)
+        scene.add(model)
+      },
+      function (xhr) {
+        console.log((xhr.loaded / xhr.total) * 100 + ' % loaded')
+      },
+      function (error) {
+        console.error('An error occurred:', error)
+      }
+    )
+
+    const sizes = {
+      width: window.innerWidth,
+      height: window.innerHeight,
+    }
+
+    const camera = new THREE.PerspectiveCamera(
+      75,
+      sizes.width / sizes.height,
+      0.1,
+      100
+    )
+    camera.position.set(0, 1, 2)
+    scene.add(camera)
+
+    const light = new THREE.DirectionalLight(0xffffff, 2)
+    light.position.set(2, 2, 5)
+    scene.add(light)
+
+    const renderer = new THREE.WebGLRenderer({
+      canvas: canvasRef.current,
+    })
+    renderer.setSize(sizes.width, sizes.height)
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    renderer.shadowMap.enabled = true
+    renderer.gammaOutput = true
+
+    const controls = new OrbitControls(camera, canvasRef.current)
+    controls.enableDamping = true
+
+    const animate = () => {
+      requestAnimationFrame(animate)
+      controls.update()
+      renderer.render(scene, camera)
+    }
+
+    animate()
+
+    const handleResize = () => {
+      sizes.width = window.innerWidth
+      sizes.height = window.innerHeight
+      camera.aspect = sizes.width / sizes.height
+      camera.updateProjectionMatrix()
+      renderer.setSize(sizes.width, sizes.height)
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    }
+
+    window.addEventListener('resize', handleResize)
+
+    return () => {
+      window.removeEventListener('resize', handleResize)
+      renderer.dispose()
+      controls.dispose()
+    }
+  }, [])
 
   return (
     <Box
-      width="100vw"
-      height="100vh"
-      display="flex"
-      flexDirection="column"
-      justifyContent="center"
-      alignItems="center"
+  width="100vw"
+  height="100vh"
+  display="flex"
+  flexDirection="row"
+  justifyContent="space-between"
+  alignItems="stretch" // Use "stretch" to ensure both elements fill the full height
+  sx={{ boxSizing: 'border-box', overflow: 'hidden', backgroundColor: '#f7c6e7' }} // Ensure no overflow
+>
+  {/* Canvas element for Three.js */}
+  <Box
+    width="50vw"
+    height="100vh"
+    display="flex"
+    justifyContent="center"
+    alignItems="center"
+    sx={{ boxSizing: 'border-box' }}
+  >
+    <canvas className="webgl" ref={canvasRef} style={{ width: '100%', height: '100%' }}></canvas>
+  </Box>
+
+  {/* Chat Box */}
+  <Box
+    width="40vw"
+    height="90vh"
+    display="flex"
+    justifyContent="center"
+    alignItems="center"
+    sx={{ boxSizing: 'border-box', overflow: 'hidden' }} // Ensure no overflow
+  >
+    <Stack
+      direction={'column'}
+      width="100%" // Set width to full to match 50vw
+      height="80%" // Set height to full to match 100vh
+      p={4}
+      spacing={3}
+      sx={{
+        backgroundColor: '#f7c6e7',
+        borderRadius: 2,
+      }}
     >
       <Stack
         direction={'column'}
-        width="500px"
-        height="700px"
-        border="1px solid black"
-        p={2}
-        spacing={3}
+        spacing={2}
+        flexGrow={1}
+        overflow="auto"
+        maxHeight="100%"
       >
-        <Stack
-          direction={'column'}
-          spacing={2}
-          flexGrow={1}
-          overflow="auto"
-          maxHeight="100%"
-        >
-          {messages.map((message, index) => (
+        {messages.map((message, index) => (
+          <Box
+            key={index}
+            display="flex"
+            justifyContent={
+              message.role === 'assistant' ? 'flex-start' : 'flex-end'
+            }
+          >
             <Box
-              key={index}
-              display="flex"
-              justifyContent={
-                message.role === 'assistant' ? 'flex-start' : 'flex-end'
+              bgcolor={
+                message.role === 'assistant'
+                  ? '#b8027b'
+                  : 'secondary.main'
               }
+              color="white"
+              borderRadius={16}
+              p={3}
             >
-              <Box
-                bgcolor={
-                  message.role === 'assistant'
-                    ? 'primary.main'
-                    : 'secondary.main'
-                }
-                color="white"
-                borderRadius={16}
-                p={3}
-              >
-                {message.content}
-              </Box>
+              {message.content}
             </Box>
-          ))}
-          <div ref={messagesEndRef} />
-        </Stack>
-        <Stack direction={'row'} spacing={2}>
-          <TextField
-            label="Message"
-            fullWidth
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-          />
-          <Button variant="contained" onClick={sendMessage}>
-            Send
-          </Button>
-        </Stack>
+          </Box>
+        ))}
+        <div ref={messagesEndRef} />
       </Stack>
-    </Box>
+      <Stack direction={'row'} spacing={2}>
+        <TextField
+          label="Message"
+          fullWidth
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+        />
+        <Button variant="contained" onClick={sendMessage} sx={{ backgroundColor: '#b8027b', '&:hover': { backgroundColor: '#d81b60' } }}>
+          Send
+        </Button>
+      </Stack>
+    </Stack>
+  </Box>
+</Box>
+
   )
 }
-
-// 'use client'
-// import { Box, Button, Stack, TextField } from "@mui/material";
-// // import Image from "next/image";
-// import { useState } from "react";
-
-// export default function Home() {
-//   const [messages, setMessages] = useState ([{
-//     role: 'assistant',
-//     content: `Hi I'm the Headstarter Support Agent, how can I assist you today?`,
-//   },])
-//   const [message, setMessage] = useState('')
-
-//   const sendMessage = async() =>{
-    
-//     setMessage('')
-//     setMessage((messages)=>[
-//       ...messages,
-//       {role: 'user', content: message},
-//       {role: 'assistant', content: ''},
-//     ])
-//     const response = fetch('/api/chat', {
-//       method: 'POST',
-//       headers: {
-//         'Content-Type': 'application/json',
-//       },
-//       body: JSON.stringify([...messages,{role: 'user', content: message}]),
-//     }).then(async(res)=>{
-//       const reader = res.body.getReader()
-//       const decoder = new TextDecoder()
-
-//       let result = ''
-//       return reader.read().then(function processText({done, value}){
-//         if (done){
-//           return result
-//         }
-//         const text = decoder.decode(value || new Int8Array(), {stream:true})
-//         setMessages ((messages) => {
-//           let lastMessage = messages[messages.length-1]
-//           let otherMessages = messages.slice(0, messages.length-1)
-//           return [
-//             ...otherMessages,
-//             {
-//               ...lastMessage,
-//               content: lastMessage.content + text,
-//             },
-//           ]
-//         })
-//         return reader.read.then(processText)
-//       })
-//     })
-//   }
-//   return (
-//   <Box width='100vw' height='100vh' display='flex' flexDirection='column' justifyContent='center' alignItems='center'>
-//     <Stack direction='column' width='600px' height='700px' border='1px solid black' p={2} spacing={3}>
-//       <Stack direction='column' spacing={2} flexGrow={1} overflow='auto' maxHeight='100%'>
-//         {
-//           messages.map((message, index) =>(
-//             <Box key={index} display='flex' justifyContent={message.role === 'assistant' ? 'flex-start' : 'flex-end'}>
-//               <Box bgcolor={message.role === 'assistant' ? 'primary.main' : 'secondary.main'} color='white' borderRadius={16} p={3}>
-//                 {message.content}
-//               </Box>
-//             </Box>
-//           ))
-//         }
-//       </Stack>
-//       <Stack direction = 'row' spacing = {2}>
-//         <TextField label= 'message' fullWidth value={message} onChange={(e)=> setMessage(e.target.value)}/> 
-//         <Button variant = 'contained' onClick={sendMessage}>
-//           Send
-//         </Button>
-//       </Stack>
-//     </Stack>
-//   </Box>
-//   )
-// }
