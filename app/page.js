@@ -3,7 +3,10 @@ import * as THREE from './three.js-master/build/three.module.js'
 import { Box, Stack, TextField, Button } from '@mui/material'
 import { useEffect, useRef, useState } from 'react'
 import { GLTFLoader } from './three.js-master/examples/jsm/loaders/GLTFLoader.js'
-import { OrbitControls } from './three.js-master/examples/jsm/controls/OrbitControls.js'
+// import { OrbitControls } from './three.js-master/examples/jsm/controls/OrbitControls.js'
+// index.js or App.js
+//import './index.css'; // or './App.css', depending on your setup
+
 
 export default function Home() {
   const [messages, setMessages] = useState([
@@ -68,10 +71,10 @@ export default function Home() {
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color('#f7c6e7');
-  //load sparkle texture
+    //load sparkle texture
     const textureLoader = new THREE.TextureLoader();
     const sparkleTexture = textureLoader.load('/sparkles.256x245.png');
-  
+
     const particleCount = 200;
     const particlesGeometry = new THREE.BufferGeometry();
     const particlesMaterial = new THREE.PointsMaterial({
@@ -84,22 +87,22 @@ export default function Home() {
       // color: new THREE.Color(0xfaeeb4)
     });
     const positions = new Float32Array(particleCount * 3);
-  
+
     for (let i = 0; i < particleCount; i++) {
       const x = (Math.random() - 0.5) * 10;
       const y = (Math.random() - 0.5) * 10;
       const z = (Math.random() - 0.5) * 10;
-  
+
       positions[i * 3] = x;
       positions[i * 3 + 1] = y;
       positions[i * 3 + 2] = z;
     }
-  
+
     particlesGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-  
+
     const particles = new THREE.Points(particlesGeometry, particlesMaterial);
     scene.add(particles);
-  
+
     // if (!canvasRef.current) return
 
     // const scene = new THREE.Scene()
@@ -112,7 +115,7 @@ export default function Home() {
       function (glb) {
         model = glb.scene
         model.scale.set(25, 25, 25)
-        model.position.set(0,0,0)
+        model.position.set(0, 0, 0)
         scene.add(model)
       },
       function (xhr) {
@@ -196,7 +199,11 @@ export default function Home() {
       flexDirection="row"
       justifyContent="space-between"
       alignItems="stretch"
-      sx={{ boxSizing: 'border-box', overflow: 'hidden', backgroundColor: '#f7c6e7' }}
+      sx={{ boxSizing: 'border-box',
+      overflow: 'hidden', 
+      backgroundColor: '#f7c6e7', 
+      cursor: 'url(/white-cursor.png), auto'
+      }}
     >
       {/* Canvas element for Three.js */}
       <Box
@@ -205,7 +212,9 @@ export default function Home() {
         display="flex"
         justifyContent="center"
         alignItems="center"
-        sx={{ boxSizing: 'border-box' }}
+        sx={{ boxSizing: 'border-box',
+        cursor: 'url(/white-cursor.png), auto'
+       }}
       >
         <canvas className="webgl" ref={canvasRef} style={{ width: '100%', height: '100%' }}></canvas>
       </Box>
@@ -217,7 +226,8 @@ export default function Home() {
         display="flex"
         justifyContent="center"
         alignItems="center"
-        sx={{ boxSizing: 'border-box', overflow: 'hidden' }}
+        sx={{ boxSizing: 'border-box', overflow: 'hidden',
+        cursor: 'url(/white-cursor.png), auto' }}
       >
         <Stack
           direction={'column'}
@@ -228,6 +238,7 @@ export default function Home() {
           sx={{
             backgroundColor: '#f7c6e7',
             borderRadius: 2,
+            cursor: 'url(/white-cursor.png), auto'
           }}
         >
           <Stack
@@ -236,6 +247,9 @@ export default function Home() {
             flexGrow={1}
             overflow="auto"
             maxHeight="100%"
+            sx={{
+              cursor: 'url(/white-cursor.png), auto' // Custom cursor here
+            }}
           >
             {messages.map((message, index) => (
               <Box
@@ -244,6 +258,7 @@ export default function Home() {
                 justifyContent={
                   message.role === 'assistant' ? 'flex-start' : 'flex-end'
                 }
+                sx={{ cursor: 'url(/white-cursor.png), auto' }}
               >
                 <Box
                   bgcolor={
@@ -252,7 +267,7 @@ export default function Home() {
                       : 'secondary.main'
                   }
                   color="white"
-                  borderRadius={16}
+                  borderRadius={2}
                   p={3}
                 >
                   {message.content}
@@ -267,8 +282,53 @@ export default function Home() {
               fullWidth
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              // sx={{backgroundColor: '#fffefa'}}
-              
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault(); // Prevents the default action of the Enter key (like submitting a form)
+                  sendMessage();
+                }
+              }}
+              sx={{
+                backgroundColor: '#E4AEE8',
+                borderRadius: 2, // Add border radius
+                '& .MuiInputBase-root': {
+                  border: 'none', // Remove the border
+                  borderRadius: 2, // Add border radius to the input field
+                  '&:hover': {
+                    border: 'none', // Ensure no border on hover
+                  },
+                },
+                '& .MuiInputLabel-root': {
+                  color: 'white', // Customize label color if needed
+                  '&.Mui-focused': {
+                    color: 'white', // Ensure label color remains white when focused
+                  },
+                },
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2, // Add border radius to the outlined input variant
+                  '& fieldset': {
+                    border: 'none', // Remove the default border
+                  },
+                  '&:hover fieldset': {
+                    border: 'none', // Ensure no border on hover
+                  },
+                  '&.Mui-focused fieldset': {
+                    border: 'none', // Ensure no border when focused
+                  },
+                },
+                '& .MuiInputBase-input': {
+                  color: '#F3DEF5', // Set text color
+                  '&:hover': {
+                    color: '#F3DEF5', // Ensure text color remains the same on hover
+                  },
+                },
+                '& .MuiOutlinedInput-root:hover .MuiInputLabel-root': {
+                  color: 'white', // Change label color to pink on hover
+                },
+                '& .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'white', // Change the border color to pink on hover
+                },
+              }}
             />
             <Button variant="contained" onClick={sendMessage} sx={{ backgroundColor: '#b8027b', '&:hover': { backgroundColor: '#d81b60' } }}>
               Send
