@@ -4,8 +4,6 @@ import { Box, Stack, TextField, Button } from '@mui/material'
 import { useEffect, useRef, useState } from 'react'
 import { GLTFLoader } from './three.js-master/examples/jsm/loaders/GLTFLoader.js'
 // import { OrbitControls } from './three.js-master/examples/jsm/controls/OrbitControls.js'
-// index.js or App.js
-//import './index.css'; // or './App.css', depending on your setup
 
 
 export default function Home() {
@@ -202,7 +200,7 @@ export default function Home() {
       sx={{ boxSizing: 'border-box',
       overflow: 'hidden', 
       backgroundColor: '#f7c6e7', 
-      cursor: 'url(/white-cursor.png), auto'
+      
       }}
     >
       {/* Canvas element for Three.js */}
@@ -213,7 +211,7 @@ export default function Home() {
         justifyContent="center"
         alignItems="center"
         sx={{ boxSizing: 'border-box',
-        cursor: 'url(/white-cursor.png), auto'
+       
        }}
       >
         <canvas className="webgl" ref={canvasRef} style={{ width: '100%', height: '100%' }}></canvas>
@@ -227,7 +225,7 @@ export default function Home() {
         justifyContent="center"
         alignItems="center"
         sx={{ boxSizing: 'border-box', overflow: 'hidden',
-        cursor: 'url(/white-cursor.png), auto' }}
+        }}
       >
         <Stack
           direction={'column'}
@@ -238,7 +236,7 @@ export default function Home() {
           sx={{
             backgroundColor: '#f7c6e7',
             borderRadius: 2,
-            cursor: 'url(/white-cursor.png), auto'
+            
           }}
         >
           <Stack
@@ -247,9 +245,7 @@ export default function Home() {
             flexGrow={1}
             overflow="auto"
             maxHeight="100%"
-            sx={{
-              cursor: 'url(/white-cursor.png), auto' // Custom cursor here
-            }}
+           
           >
             {messages.map((message, index) => (
               <Box
@@ -258,7 +254,7 @@ export default function Home() {
                 justifyContent={
                   message.role === 'assistant' ? 'flex-start' : 'flex-end'
                 }
-                sx={{ cursor: 'url(/white-cursor.png), auto' }}
+                
               >
                 <Box
                   bgcolor={
