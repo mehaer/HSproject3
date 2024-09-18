@@ -40,7 +40,7 @@ export async function POST(req){
     const completion = await openai.chat.completions.create({
         messages:[{role: 'system', content: systemPrompt}, ...data],
         // model: 'gpt-4o-mini',
-        model: 'gpt-3.5-turbo',
+        // model: 'meta-llama/llama-3.1-8b-instruct:free',
         stream: true,
     })
     const stream = new ReadableStream({
